@@ -1,0 +1,3 @@
+[submodule "OpenOcdTclClient"]
+	path = OpenOcdTclClient
+	url = https://github.com/apmorton/OpenOcdTclClient
