@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenOcdTraceUtil", "OpenOcdTraceUtil\OpenOcdTraceUtil.csproj", "{AE5164EA-AEBA-4B14-B3C2-95141112B27E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenOcdTclClient", "OpenOcdTclClient\OpenOcdTclClient\OpenOcdTclClient.csproj", "{A171E5BD-B338-4666-9B6A-02F443FF61B0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwoDec", "SwoDec\SwoDec\SwoDec.csproj", "{5FAA768F-2E31-4488-9736-9A53D78E6424}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AE5164EA-AEBA-4B14-B3C2-95141112B27E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE5164EA-AEBA-4B14-B3C2-95141112B27E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE5164EA-AEBA-4B14-B3C2-95141112B27E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE5164EA-AEBA-4B14-B3C2-95141112B27E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A171E5BD-B338-4666-9B6A-02F443FF61B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A171E5BD-B338-4666-9B6A-02F443FF61B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A171E5BD-B338-4666-9B6A-02F443FF61B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A171E5BD-B338-4666-9B6A-02F443FF61B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FAA768F-2E31-4488-9736-9A53D78E6424}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FAA768F-2E31-4488-9736-9A53D78E6424}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FAA768F-2E31-4488-9736-9A53D78E6424}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FAA768F-2E31-4488-9736-9A53D78E6424}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
