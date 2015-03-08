@@ -1,3 +1,6 @@
 [submodule "OpenOcdTclClient"]
 	path = OpenOcdTclClient
 	url = https://github.com/apmorton/OpenOcdTclClient
+[submodule "SwoDec"]
+	path = SwoDec
+	url = https://github.com/apmorton/SwoDec
