@@ -31,6 +31,7 @@
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabelConnected = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabelTargetState = new System.Windows.Forms.ToolStripStatusLabel();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -45,7 +46,8 @@
             // statusStrip1
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripStatusLabelConnected});
+            this.toolStripStatusLabelConnected,
+            this.toolStripStatusLabelTargetState});
             this.statusStrip1.Location = new System.Drawing.Point(0, 413);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(789, 22);
@@ -55,8 +57,16 @@
             // toolStripStatusLabelConnected
             // 
             this.toolStripStatusLabelConnected.Name = "toolStripStatusLabelConnected";
-            this.toolStripStatusLabelConnected.Size = new System.Drawing.Size(79, 17);
+            this.toolStripStatusLabelConnected.Size = new System.Drawing.Size(727, 17);
+            this.toolStripStatusLabelConnected.Spring = true;
             this.toolStripStatusLabelConnected.Text = "Disconnected";
+            this.toolStripStatusLabelConnected.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // toolStripStatusLabelTargetState
+            // 
+            this.toolStripStatusLabelTargetState.Name = "toolStripStatusLabelTargetState";
+            this.toolStripStatusLabelTargetState.Size = new System.Drawing.Size(16, 17);
+            this.toolStripStatusLabelTargetState.Text = "...";
             // 
             // OpenOcdTraceUtilMain
             // 
@@ -67,6 +77,7 @@
             this.Controls.Add(this.textBox1);
             this.Name = "OpenOcdTraceUtilMain";
             this.Text = "OpenOCD Trace Utility";
+            this.Load += new System.EventHandler(this.OpenOcdTraceUtilMain_Load);
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -79,6 +90,7 @@
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelConnected;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelTargetState;
     }
 }
 
