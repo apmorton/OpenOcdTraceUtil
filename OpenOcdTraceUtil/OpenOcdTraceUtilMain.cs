@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace OpenOcdTraceUtil
@@ -14,23 +9,28 @@ namespace OpenOcdTraceUtil
     {
         private OpenOcdTclClient.OpenOcdTclClient client;
         private SwoDec.SwoDecoder decoder;
+        private ItmPortsForm itmPorts;
 
         public OpenOcdTraceUtilMain()
         {
             InitializeComponent();
+
+            // setup decoder
             decoder = new SwoDec.SwoDecoder();
             decoder.PacketAvailable += DecoderOnPacketAvailable;
+
+            // setup client
             client = new OpenOcdTclClient.OpenOcdTclClient(this);
             client.Trace = true;
             client.Notifications = true;
             client.ConnectionChanged += ClientOnConnectionChanged;
             client.TargetTrace += ClientOnTargetTrace;
             client.TargetStateChanged += ClientOnTargetStateChanged;
-        }
 
-        private void ClientOnTargetStateChanged(object sender, OpenOcdTclClient.OpenOcdTclClient.TargetStateArgs args)
-        {
-            toolStripStatusLabelTargetState.Text = args.State.ToString();
+            // setup ports form
+            itmPorts = new ItmPortsForm();
+            itmPorts.ItmPortEnableChange += OnItmPortsItmPortEnableChange;
+            itmPorts.ItmPortsEnableChange += OnItmPortsItmPortsEnableChange;
         }
 
         private void DecoderOnPacketAvailable(object sender, SwoDec.SwoDecoder.PacketAvailableArgs args)
@@ -43,35 +43,111 @@ namespace OpenOcdTraceUtil
                 case SwoDec.SwoPacketType.Sync:
                     break;
                 default:
-                    textBox1.AppendText(String.Format("Unhandled Packet: {0}\n", args.Packet.Type));
+                    richTextBoxLog.AppendText(String.Format("Unhandled Packet: {0}\n", args.Packet.Type));
+                    richTextBoxLog.ScrollToEnd();
                     break;
             }
         }
 
-        private Dictionary<int, List<byte>> instBuffer = new Dictionary<int, List<byte>>();
         private void DecoderOnInstrumentationPacketAvailable(SwoDec.Packets.InstrumentationPacket packet)
         {
-            // create buffer if it doesn't exist
-            if (!instBuffer.ContainsKey(packet.Address))
-                instBuffer[packet.Address] = new List<byte>();
+            var port = itmPorts.Ports[packet.Address];
 
-            if (packet.PayloadSize > 1)
+            switch (port.Type)
             {
-                textBox1.AppendText(String.Format("{0}: {1}\n", packet.Address, packet.Value));
-                return;
-            }
+                case ItmPortType.Ascii:
+                    if (packet.PayloadSize > 1)
+                    {
+                        richTextBoxLog.AppendText(String.Format("{0}: Incorrect Payload Size for ASCII mode {1}\n", packet.Address, packet.Value));
+                        return;
+                    }
 
-            if (packet.Value == 10)
-            {
-                var str = Encoding.UTF8.GetString(instBuffer[packet.Address].ToArray()).Trim();
-                textBox1.AppendText(String.Format("{0}: {1}\n", packet.Address, str));
-                instBuffer[packet.Address].Clear();
-            }
-            else if (packet.Value != 13)
-            {
-                instBuffer[packet.Address].Add((byte)packet.Value);
+                    port.StringBuffer += Encoding.UTF8.GetString(new byte[] { (byte)packet.Value });
+                    if (port.StringBuffer.EndsWith("\n"))
+                    {
+                        richTextBoxLog.AppendText(String.Format("{0}: {1}\n", packet.Address, port.StringBuffer.Trim()), port.Color);
+                        richTextBoxLog.ScrollToEnd();
+                        port.StringBuffer = "";
+                    }
+                    break;
+                case ItmPortType.Binary:
+                    if (port.BinaryBufferInProgress)
+                    {
+                        if (port.BinaryBuffer.Count < port.BinaryBufferLength)
+                        {
+                            if (packet.PayloadSize == 4)
+                                port.BinaryBuffer.AddRange(BitConverter.GetBytes(packet.Value));
+                            else if (packet.PayloadSize == 2)
+                                port.BinaryBuffer.AddRange(BitConverter.GetBytes((ushort)packet.Value));
+                            else if (packet.PayloadSize == 1)
+                                port.BinaryBuffer.Add((byte)packet.Value);
+                        }
+
+                        if (port.BinaryBuffer.Count == port.BinaryBufferLength)
+                        {
+                            port.StringBuffer = String.Concat(port.BinaryBuffer.Select(b => b.ToString("X2")));
+                            richTextBoxLog.AppendText(String.Format("{0}: {1}\n", packet.Address, port.StringBuffer.Trim()), port.Color);
+                            richTextBoxLog.ScrollToEnd();
+                            port.StringBuffer = "";
+                            port.BinaryBuffer = null;
+                            port.BinaryBufferInProgress = false;
+                        }
+                        else if (port.BinaryBuffer.Count > port.BinaryBufferLength)
+                        {
+                            var diff = port.BinaryBuffer.Count - port.BinaryBufferLength;
+                            port.StringBuffer = String.Concat(port.BinaryBuffer.Select(b => b.ToString("X2")));
+                            richTextBoxLog.AppendText(String.Format("{0}: Buffer overflow for Binary mode {1}\n", packet.Address, diff));
+                            richTextBoxLog.AppendText(String.Format("{0}: {1}\n", packet.Address, port.StringBuffer.Trim()), port.Color);
+                            richTextBoxLog.ScrollToEnd();
+                            port.StringBuffer = "";
+                            port.BinaryBuffer = null;
+                            port.BinaryBufferInProgress = false;
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        if (packet.PayloadSize != 4)
+                        {
+                            richTextBoxLog.AppendText(String.Format("{0}: Incorrect Payload Size for Binary mode {1}, {2}\n", packet.Address, packet.PayloadSize, packet.Value.ToString("X8")));
+                            richTextBoxLog.ScrollToEnd();
+                            return;
+                        }
+
+                        if ((packet.Value & 0xFFFF0000) == 0xBAEF0000)
+                        {
+                            port.BinaryBufferLength = packet.Value & 0xFFFF;
+                            port.BinaryBuffer = new System.Collections.Generic.List<byte>();
+                            port.BinaryBufferInProgress = true;
+                        }
+                        else
+                        {
+                            richTextBoxLog.AppendText(String.Format("{0}: Incorrect Value for Binary mode {1}\n", packet.Address, packet.Value.ToString("X8")));
+                            richTextBoxLog.ScrollToEnd();
+                            return;
+                        }
+                    }
+                    break;
             }
         }
+
+        #region ItmPorts Event Handlers
+
+        private void OnItmPortsItmPortsEnableChange(object sender, ItmPortsForm.ItmPortsEnableChangeArgs args)
+        {
+            if (client.Connected)
+                client.ItmPorts(args.Enabled);
+        }
+
+        private void OnItmPortsItmPortEnableChange(object sender, ItmPortsForm.ItmPortEnableChangeArgs args)
+        {
+            if (client.Connected)
+                client.ItmPort(args.Port.Channel, args.Port.Enabled);
+        }
+
+        #endregion
+
+        #region Client Event Handlers
 
         private void ClientOnTargetTrace(object sender, OpenOcdTclClient.OpenOcdTclClient.TargetTraceArgs args)
         {
@@ -82,14 +158,41 @@ namespace OpenOcdTraceUtil
         private void ClientOnConnectionChanged(object sender, EventArgs e)
         {
             if (client.Connected)
+            {
                 toolStripStatusLabelConnected.Text = "Connected";
+                if (itmPorts.Ports.All(p => p.Enabled))
+                    client.ItmPorts(true);
+                else
+                {
+                    if (!itmPorts.Ports[0].Enabled)
+                        client.ItmPort(0, false);
+                    foreach (var port in itmPorts.Ports.Where(p => p.Enabled))
+                        client.ItmPort(port.Channel, true);
+                }
+            }
             else
                 toolStripStatusLabelConnected.Text = "Disconnected";
         }
 
-        private void OpenOcdTraceUtilMain_Load(object sender, EventArgs e)
+        private void ClientOnTargetStateChanged(object sender, OpenOcdTclClient.OpenOcdTclClient.TargetStateArgs args)
+        {
+            toolStripStatusLabelTargetState.Text = args.State.ToString();
+        }
+
+        #endregion
+
+        #region Form Event Handlers
+
+        private void OpenOcdTraceUtilMainLoad(object sender, EventArgs e)
         {
             client.Start();
         }
+
+        private void ItmPortsToolStripMenuItemClick(object sender, EventArgs e)
+        {
+            itmPorts.Show();
+        }
+
+        #endregion
     }
 }
